@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tap Crush Quest</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:sans-serif}
+body{background:linear-gradient(135deg,#121026,#20204a,#282a5e);color:#fff;min-height:100vh;overflow:hidden}
+#splash{position:fixed;top:0;left:0;width:100%;height:100vh;background:linear-gradient(135deg,#6a11cb,#2575fc);display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column}
+.splash-logo{font-size:3.6rem;font-weight:900;background:linear-gradient(45deg,#fff,#ffdf70);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gl 1.6s infinite alternate}
+@keyframes gl{from{filter:drop-shadow(0 0 10px #fff)}to{filter:drop-shadow(0 0 35px #ffd700)}}
+.load{margin-top:16px;font-size:1.1rem;opacity:.8}
+#musicBtn{position:fixed;top:12px;left:12px;z-index:999;background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 10px;border-radius:50px}
+#langBtn{position:fixed;top:12px;right:12px;z-index:999;background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 10px;border-radius:50px}
+#menu{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:18px}
+.title{font-size:3rem;font-weight:900;background:linear-gradient(45deg,#ff6b9d,#7aafff,#ffef9f);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.btn{padding:16px 36px;border-radius:50px;border:none;color:#fff;font-weight:bold;font-size:1.1rem;box-shadow:0 6px 20px rgba(0,0,0,.25);width:80%;max-width:340px}
+.btn-play{background:linear-gradient(135deg,#ff416c,#ff4b2b)}
+.btn-daily{background:linear-gradient(135deg,#f7971e,#ffd200)}
+.btn-lucky{background:linear-gradient(135deg,#da22ff,#9722ff)}
+.btn-shop{background:linear-gradient(135deg,#00c9ff,#0099ff)}
+.btn-levels{background:linear-gradient(135deg,#00b09b,#96c93d)}
+.ui{display:none;padding:12px}
+.bar{display:flex;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,.2);border-radius:12px;margin-bottom:10px}
+#box{width:100%;height:66vh;background:rgba(255,255,255,.05);border-radius:20px;position:relative;overflow:hidden}
+.tile{width:64px;height:64px;border-radius:14px;position:absolute;box-shadow:0 0 12px rgba(0,0,0,.3);animation:pulse .7s infinite alternate}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.05)}}
+.tile.hit{animation:boom .3s forwards}
+@keyframes boom{0%{transform:scale(1);opacity:1}50%{transform:scale(1.7);opacity:.9}100%{transform:scale(0);opacity:0}}
+.float{position:absolute;font-weight:bold;animation:fly .8s forwards;font-size:1.2rem}
+@keyframes fly{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-70px)}}
+.explode{position:absolute;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,#ff6b9d,transparent);animation:exp .5s forwards}
+@keyframes exp{0%{transform:scale(0);opacity:1}100%{transform:scale(2.2);opacity:0}}
+.star{position:absolute;width:18px;height:18px;background:#ffd700;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);animation:sfly 1s forwards}
+@keyframes sfly{0%{transform:scale(0);opacity:1}100%{transform:translateY(-50px);opacity:0}}
+#gameOver{display:none;position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,.9);align-items:center;justify-content:center;flex-direction:column}
+.over-title{font-size:2.8rem;color:#ff4b2b}
+.shop{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+.card{background:rgba(255,255,255,.08);padding:12px;border-radius:16px;text-align:center}
+.preview{width:50px;height:50px;border-radius:12px;margin:0 auto 8px}
+#daily{display:none;padding:20px;text-align:center}
+#lucky{display:none;padding:20px;text-align:center}
+.wheel{width:240px;height:240px;border-radius:50%;background:conic-gradient(#ff416c 0deg 60deg,#ffb400 60deg 120deg,#00c9ff 120deg 180deg,#da22ff 180deg 240deg,#00b09b 240deg 300deg,#ff6b9d 300deg 360deg);margin:20px auto;position:relative}
+.wheel::after{content:"";position:absolute;top:50%;left:50%;width:20px;height:20px;background:#fff;border-radius:50%;transform:translate(-50%,-50%)}
+</style>
+</head>
+<body>
+
+<button id="musicBtn">🎵 ON</button>
+<button id="langBtn">EN / 中</button>
+
+<div id="splash">
+    <h1 class="splash-logo">🔥 TAP CRUSH QUEST</h1>
+    <p class="load">Loading...</p>
+</div>
+
+<div id="menu">
+    <h1 class="title">Tap Crush Quest</h1>
+    <button class="btn btn-play" onclick="play()">▶ PLAY</button>
+    <button class="btn btn-levels" onclick="goto('levels')">📊 LEVELS</button>
+    <button class="btn btn-daily" onclick="goto('daily')">📅 DAILY</button>
+    <button class="btn btn-lucky" onclick="goto('lucky')">🎡 LUCKY WHEEL</button>
+    <button class="btn btn-shop" onclick="goto('shop')">🎨 SHOP</button>
+</div>
+
+<div id="game" class="ui">
+    <div class="bar">
+        <div>Score: <span id="score">0</span></div>
+        <div>Level: <span id="lev">1</span></div>
+        <div>Gold: <span id="gold">0</span></div>
+    </div>
+    <div id="box"></div>
+    <div class="bar" style="margin-top:10px">
+        <button onclick="useBomb()" style="padding:8px 12px;border-radius:12px;background:#ff416c;color:#fff">💣 BOMB</button>
+        <button onclick="useFreeze()" style="padding:8px 12px;border-radius:12px;background:#00c9ff;color:#fff">❄️ FREEZE</button>
+        <button onclick="useMulti()" style="padding:8px 12px;border-radius:12px;background:#ffb400;color:#fff">⚡ X2</button>
+    </div>
+</div>
+
+<div id="shop" class="ui">
+    <h2>SKIN SHOP</h2>
+    <div class="shop">
+        <div class="card"><div class="preview" style="background:#ff416c"></div><p>Red Fire</p></div>
+        <div class="card"><div class="preview" style="background:#00c9ff"></div><p>Ocean Blue</p></div>
+        <div class="card"><div class="preview" style="background:#da22ff"></div><p>Neon Purple</p></div>
+        <div class="card"><div class="preview" style="background:#00b09b"></div><p>Jungle Green</p></div>
+    </div>
+    <br>
+    <button class="btn" onclick="goto('menu')">BACK</button>
+</div>
+
+<div id="daily" class="ui">
+    <h2>DAILY REWARD</h2>
+    <p style="margin:16px 0">Claim +200 Gold</p>
+    <button class="btn btn-daily" onclick="claimDaily()">CLAIM</button>
+    <br>
+    <button class="btn" onclick="goto('menu')">BACK</button>
+</div>
+
+<div id="lucky" class="ui">
+    <h2>LUCKY WHEEL</h2>
+    <div class="wheel"></div>
+    <button class="btn btn-lucky" onclick="spin()">SPIN</button>
+    <br>
+    <button class="btn" onclick="goto('menu')">BACK</button>
+</div>
+
+<div id="levels" class="ui">
+    <h2>LEVEL MODE</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px">
+        <button onclick="startLevel(1)" style="padding:16px;border-radius:12px;background:#00b09b;color:#fff">1</button>
+        <button onclick="startLevel(2)" style="padding:16px;border-radius:12px;background:#00b09b;color:#fff">2</button>
+        <button onclick="startLevel(3)" style="padding:16px;border-radius:12px;background:#00b09b;color:#fff">3</button>
+    </div>
+    <br>
+    <button class="btn" onclick="goto('menu')">BACK</button>
+</div>
+
+<div id="gameOver">
+    <h2 class="over-title">GAME OVER</h2>
+    <p style="font-size:1.4rem;margin:12px 0">Score: <span id="final">0</span></p>
+    <button class="btn btn-play" onclick="restart()">PLAY AGAIN</button>
+</div>
+
+<script>
+let music = true, lang = 0;
+let score = 0, level = 1, gold = 0, combo = 0, multi = 1;
+let skin = "#ff416c", fallSpeed = 900;
+
+setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('menu').style.display = 'flex';
+}, 2600);
+
+document.getElementById('musicBtn').onclick = () => {
+    music = !music;
+    document.getElementById('musicBtn').innerText = music ? '🎵 ON' : '🎵 OFF';
+};
+
+function goto(p){
+    document.querySelectorAll('.ui').forEach(e => e.style.display = 'none');
+    document.getElementById('menu').style.display = 'none';
+    if(p === 'menu') document.getElementById('menu').style.display = 'flex';
+    else document.getElementById(p).style.display = 'block';
+}
+
+function play(){ startLevel(1); }
+function startLevel(lv){
+    level = lv; fallSpeed = 1100 - lv * 100;
+    score = 0; combo = 0; multi = 1;
+    document.getElementById('score').innerText = score;
+    document.getElementById('lev').innerText = level;
+    document.getElementById('gold').innerText = gold;
+    goto('game');
+    spawn();
+}
+
+function spawn(){
+    if(document.getElementById('game').style.display !== 'block') return;
+    const t = document.createElement('div');
+    t.classList.add('tile');
+    t.style.background = skin;
+    const box = document.getElementById('box');
+    t.style.left = Math.random() * (box.clientWidth - 64) + 'px';
+    t.style.top = '-70px';
+    box.appendChild(t);
+
+    t.onclick = () => {
+        combo++;
+        let add = 10 * multi * combo;
+        score += add;
+        document.getElementById('score').innerText = score;
+
+        const ex = document.createElement('div');
+        ex.classList.add('explode');
+        ex.style.left = t.style.left;
+        ex.style.top = t.style.top;
+        box.appendChild(ex);
+        setTimeout(() => ex.remove(), 500);
+
+        for(let i=0;i<3;i++){
+            const s = document.createElement('div');
+            s.classList.add('star');
+            s.style.left = parseFloat(t.style.left) + 20 + i*8 + 'px';
+            s.style.top = t.style.top;
+            box.appendChild(s);
+            setTimeout(() => s.remove(), 800);
+        }
+
+        t.remove();
+    };
+
+    const fall = setInterval(() => {
+        let y = parseFloat(t.style.top) || 0;
+        t.style.top = y + 2 + 'px';
+        if(y > box.clientHeight){
+            clearInterval(fall);
+            t.remove();
+            end();
+        }
+    }, 16);
+
+    setTimeout(spawn, fallSpeed);
+}
+
+function useBomb(){
+    document.querySelectorAll('.tile').forEach(t => t.remove());
+}
+
+function useFreeze(){ fallSpeed += 300; }
+function useMulti(){ multi = 2; setTimeout(() => multi = 1, 5000); }
+
+function claimDaily(){
+    gold += 200;
+    document.getElementById('gold').innerText = gold;
+    alert('Claimed +200 Gold!');
+}
+
+function spin(){
+    let r = Math.floor(Math.random()*500)+100;
+    gold += r;
+    document.getElementById('gold').innerText = gold;
+    alert('You Won '+r+' Gold!');
+}
+
+function end(){
+    document.getElementById('final').innerText = score;
+    document.getElementById('gameOver').style.display = 'flex';
+}
+
+function restart(){
+    document.getElementById('gameOver').style.display = 'none';
+    startLevel(level);
+}
+</script>
+</body>
+</html>
